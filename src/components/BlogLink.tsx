@@ -16,7 +16,7 @@ export function BlogLink({ className = "" }: { className?: string }) {
       >
         ✍️ 웨티아빠 블로그
       </a>
-      에서 더 많은 학습 자료를 만나요
+      에서 아들 웨티와 함께하는 소소한 일상을 만나요
     </p>
   );
 }

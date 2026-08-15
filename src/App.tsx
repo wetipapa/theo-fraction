@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { Analytics } from "@vercel/analytics/react";
 import { GameScreen } from "./screens/GameScreen";
 import { HomeScreen } from "./screens/HomeScreen";
 import { ResultScreen } from "./screens/ResultScreen";
@@ -66,6 +67,8 @@ function App() {
           />
         )}
       </div>
+      {/* 방문 통계. 개인을 식별하지 않고, 아이의 기록은 여전히 이 기기 안에만 남는다 */}
+      <Analytics />
     </div>
   );
 }
