@@ -39,7 +39,7 @@ export function GameScreen({ settings, bestScore, onEnd, onQuit }: GameScreenPro
     combo: 0,
   });
   const [question, setQuestion] = useState(() => {
-    const e = new Engine(settings.speed);
+    const e = new Engine(settings);
     engineRef.current = e;
     return e.question;
   });

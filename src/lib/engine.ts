@@ -1,4 +1,4 @@
-import { DIFFICULTY_SETS, PHYSICS, RULES, type SpeedId } from "../config/gameConfig";
+import { DIFFICULTY_SETS, PHYSICS, RULES, type Settings } from "../config/gameConfig";
 import { foodById } from "../data/foods";
 import type { Particle, Phase, Piece, Popup, Question } from "../types";
 import { isCorrectPiece, makeQuestion, makeWave, type Rng } from "./problems";
@@ -42,15 +42,15 @@ export class Engine {
   private readonly diff = DIFFICULTY_SETS.slow;
   private readonly rng: Rng;
 
-  constructor(
-    speed: SpeedId,
-    rng: Rng = Math.random,
-  ) {
+  private readonly denominators: number[];
+
+  constructor(settings: Settings, rng: Rng = Math.random) {
     this.rng = rng;
-    this.diff = DIFFICULTY_SETS[speed];
+    this.diff = DIFFICULTY_SETS[settings.speed];
+    this.denominators = settings.denominators.length > 0 ? settings.denominators : [2, 3, 4];
     this.maxHearts = this.diff.hearts;
     this.hearts = this.diff.hearts;
-    this.question = makeQuestion(this.diff, rng);
+    this.question = makeQuestion(this.denominators, rng);
     // 시작하자마자 한 무리 올린다. 빈 화면을 보여 주지 않는다
     this.spawnWave();
   }
@@ -60,7 +60,7 @@ export class Engine {
   }
 
   private spawnWave() {
-    const specs = makeWave(this.question, this.diff, this.rng);
+    const specs = makeWave(this.question, this.denominators, this.diff, this.rng);
     const n = specs.length;
     specs.forEach((spec, i) => {
       // 화면 아래에서 고르게 흩어 올린다. 같은 자리에서 겹쳐 나오지 않게 칸을 나눈다
@@ -100,7 +100,9 @@ export class Engine {
     }
 
     for (const p of this.pieces) {
-      p.vy += PHYSICS.gravity * dt;
+      // 올라갈 때와 떨어질 때 힘을 다르게 준다. 같은 힘으로 떨어뜨리면
+      // 올라온 속도 그대로 내려가서 겨냥할 틈 없이 휙 지나간다.
+      p.vy += (p.vy < 0 ? PHYSICS.gravity : PHYSICS.fallGravity * this.diff.fall) * dt;
       p.x += p.vx * dt;
       p.y += p.vy * dt;
       p.angle += p.spin * dt * Math.PI * 2;
@@ -209,7 +211,7 @@ export class Engine {
       if (this.hitsInQuestion >= RULES.hitsPerQuestion) {
         this.hitsInQuestion = 0;
         this.solved++;
-        this.question = makeQuestion(this.diff, this.rng);
+        this.question = makeQuestion(this.denominators, this.rng);
         out.solved = true;
       }
     }

@@ -21,13 +21,19 @@ export interface PieceSpec {
  * 분모 2는 반, 3은 삼등분… 아이가 처음 만나는 분수부터 나오도록 작은 분모에 무게를 둔다.
  * 분자는 분모보다 작게만 잡는다. 통째로 다 칠해진 그림(3/3)은 분수라기보다 "하나"로 읽혀서 뺐다.
  */
-export function makeQuestion(diff: DifficultySet, rng: Rng, mode: QuestionMode = "find"): Question {
-  // 작은 분모가 자주 나오도록 후보를 겹쳐 담는다
+export function makeQuestion(
+  denominators: number[],
+  rng: Rng,
+  mode: QuestionMode = "find",
+): Question {
+  // 고른 것 중 작은 분모가 조금 더 자주 나오도록 후보를 겹쳐 담는다.
+  // 큰 분모만 계속 나오면 조각이 얇아 세다가 지친다.
+  const list = denominators.length > 0 ? [...denominators].sort((a, b) => a - b) : [2, 3, 4];
   const pool: number[] = [];
-  for (let d = 2; d <= diff.maxDenominator; d++) {
-    const weight = Math.max(1, diff.maxDenominator - d + 1);
-    for (let i = 0; i < weight; i++) pool.push(d);
-  }
+  list.forEach((d, i) => {
+    const weight = Math.max(1, list.length - i);
+    for (let k = 0; k < weight; k++) pool.push(d);
+  });
   const d = pick(rng, pool);
   const n = randInt(rng, 1, d - 1);
   const target = { n, d };
@@ -78,7 +84,13 @@ export function isCorrectPiece(q: Question, f: Fraction | null, diff: Difficulty
  * 정답이 항상 한 개는 들어가게 한다. 무리마다 정답이 없으면 아이는 아무것도 못 베고
  * 화면만 지나가는 걸 보게 되는데, 그게 몇 번 반복되면 게임을 놓는다.
  */
-export function makeWave(q: Question, diff: DifficultySet, rng: Rng): PieceSpec[] {
+export function makeWave(
+  q: Question,
+  denominators: number[],
+  diff: DifficultySet,
+  rng: Rng,
+): PieceSpec[] {
+  const list = denominators.length > 0 ? denominators : [2, 3, 4];
   const specs: PieceSpec[] = [];
   const usedFoods = new Set<FoodKind>();
 
@@ -91,8 +103,11 @@ export function makeWave(q: Question, diff: DifficultySet, rng: Rng): PieceSpec[
     return chosen.id;
   };
 
-  // 정답 하나. 난이도가 열려 있으면 가끔 같은 크기의 다른 표현으로 낸다
-  const equivalents = diff.allowEquivalent ? equivalentsOf(q.target, diff.maxDenominator) : [];
+  // 정답 하나. 난이도가 열려 있으면 가끔 같은 크기의 다른 표현으로 낸다.
+  // 고른 분모 안에 있는 것만 쓴다 — 2/4를 내려면 4도 골라져 있어야 한다.
+  const equivalents = diff.allowEquivalent
+    ? equivalentsOf(q.target, Math.max(...list)).filter((f) => list.includes(f.d))
+    : [];
   const useEquivalent = equivalents.length > 0 && rng() < 0.35;
   specs.push({
     role: "target",
@@ -102,7 +117,7 @@ export function makeWave(q: Question, diff: DifficultySet, rng: Rng): PieceSpec[
 
   // 오답. 정답과 헷갈리기 쉬운 것부터 고른다
   for (let i = 0; i < diff.decoys; i++) {
-    const decoy = makeDecoy(q, diff, rng);
+    const decoy = makeDecoy(q, list, diff, rng);
     if (decoy) specs.push({ role: "decoy", fraction: decoy, food: takeFood("any") });
   }
 
@@ -119,7 +134,7 @@ export function makeWave(q: Question, diff: DifficultySet, rng: Rng): PieceSpec[
  * 아무 분수나 내면 정답이 눈에 너무 잘 띈다. 분자만 하나 다르거나 분모만 다른 것을 섞어야
  * 아이가 그림을 실제로 세어 보게 된다.
  */
-function makeDecoy(q: Question, diff: DifficultySet, rng: Rng): Fraction | null {
+function makeDecoy(q: Question, list: number[], diff: DifficultySet, rng: Rng): Fraction | null {
   const { n, d } = q.target;
   const candidates: Fraction[] = [
     { n: n + 1, d },
@@ -130,18 +145,19 @@ function makeDecoy(q: Question, diff: DifficultySet, rng: Rng): Fraction | null 
   ];
 
   for (let guard = 0; guard < 30; guard++) {
-    const c = guard < 12 ? pick(rng, candidates) : randomFraction(diff, rng);
+    const c = guard < 12 ? pick(rng, candidates) : randomFraction(list, rng);
     if (!c) continue;
     if (c.n < 1 || c.d < 2 || c.n >= c.d) continue;
-    if (c.d > diff.maxDenominator) continue;
+    // 고르지 않은 분모는 내지 않는다. 2·3·4만 고른 아이에게 7등분이 나오면 안 된다
+    if (!list.includes(c.d)) continue;
     if (isCorrectPiece(q, c, diff)) continue; // 오답인데 정답이 되어 버리면 안 된다
     return c;
   }
   return null;
 }
 
-function randomFraction(diff: DifficultySet, rng: Rng): Fraction {
-  const d = randInt(rng, 2, diff.maxDenominator);
+function randomFraction(list: number[], rng: Rng): Fraction {
+  const d = pick(rng, list);
   return { n: randInt(rng, 1, d - 1), d };
 }
 

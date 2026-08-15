@@ -7,6 +7,34 @@
 
 export type SpeedId = "slow" | "normal" | "fast";
 
+/** 고를 수 있는 분모. 1은 분수가 아니고, 10 이상은 조각이 너무 얇아 눈으로 못 센다 */
+export const ALL_DENOMINATORS = [2, 3, 4, 5, 6, 7, 8, 9] as const;
+
+/**
+ * 자주 쓰는 조합 단축 버튼.
+ * 아이마다 막히는 곳이 다르다. 2·3·4는 되는데 7·8만 안 되는 식이라
+ * 난이도에 묶어 두지 않고 부모가 직접 고르게 한다.
+ */
+export const DENOMINATOR_PRESETS = [
+  { id: "basic", label: "2·3·4", list: [2, 3, 4] },
+  { id: "upto6", label: "2~6", list: [2, 3, 4, 5, 6] },
+  { id: "all", label: "전체", list: [...ALL_DENOMINATORS] },
+] as const;
+
+/** "2·3·4" 처럼 짧게. 이어지는 숫자는 물결로 묶는다 */
+export function denominatorsLabel(list: number[]): string {
+  const sorted = [...list].sort((a, b) => a - b);
+  if (sorted.length === 0) return "없음";
+  if (sorted.length === ALL_DENOMINATORS.length) return "전체";
+  const runs: number[][] = [];
+  for (const d of sorted) {
+    const last = runs[runs.length - 1];
+    if (last && d === last[last.length - 1] + 1) last.push(d);
+    else runs.push([d]);
+  }
+  return runs.map((r) => (r.length >= 3 ? `${r[0]}~${r[r.length - 1]}` : r.join("·"))).join("·");
+}
+
 export interface DifficultySet {
   label: string;
   /**
@@ -15,8 +43,12 @@ export interface DifficultySet {
    * "틀려도 계속할 수 있다"를 먼저 알려 주기 위해서다. 세 번 틀리고 끝나면 다시 켜지 않는다.
    */
   hearts: number;
-  /** 쓸 수 있는 분모의 최댓값. 작을수록 그림이 단순하다 */
-  maxDenominator: number;
+  /**
+   * 떨어질 때의 중력 배수.
+   * 올라갈 때와 같은 힘으로 떨어뜨리면 올라온 속도 그대로 내려가서 휙 지나가 버린다.
+   * 어른이 해도 겨냥할 틈이 없다. 내려올 때만 힘을 줄여 천천히 떨어지게 한다.
+   */
+  fall: number;
   /** 한 번에 떠 있을 수 있는 최대 개수 */
   maxConcurrent: number;
   /** 다음 무리가 올라오기까지의 간격(초) */
@@ -39,7 +71,7 @@ export const DIFFICULTY_SETS: Record<SpeedId, DifficultySet> = {
   slow: {
     label: "쉬움",
     hearts: 5,
-    maxDenominator: 4,
+    fall: 0.24,
     maxConcurrent: 3,
     interval: 2.2,
     speed: 0.85,
@@ -50,7 +82,7 @@ export const DIFFICULTY_SETS: Record<SpeedId, DifficultySet> = {
   normal: {
     label: "보통",
     hearts: 4,
-    maxDenominator: 6,
+    fall: 0.34,
     maxConcurrent: 4,
     interval: 1.7,
     speed: 1,
@@ -61,7 +93,7 @@ export const DIFFICULTY_SETS: Record<SpeedId, DifficultySet> = {
   fast: {
     label: "어려움",
     hearts: 3,
-    maxDenominator: 8,
+    fall: 0.50,
     maxConcurrent: 5,
     interval: 1.25,
     speed: 1.2,
@@ -99,8 +131,14 @@ export const RULES = {
 
 /** 물리. 화면 높이를 1로 본 좌표계에서 계산한다 (기기 크기와 무관하게 같은 궤적) */
 export const PHYSICS = {
-  /** 아래로 당기는 힘 (화면높이/초²) */
+  /** 올라갈 때 아래로 당기는 힘 (화면높이/초²) */
   gravity: 1.15,
+  /**
+   * 떨어질 때의 기본 힘. 난이도의 `fall`을 곱해 쓴다.
+   * 올라갈 때보다 훨씬 약하게 둬서 꼭대기에서 천천히 내려온다 —
+   * 던져 올린 것이 잠깐 떠 있는 느낌이고, 그동안 아이가 보고 겨냥한다.
+   */
+  fallGravity: 1.15,
   /**
    * 튀어 오르는 초기 속도의 범위 (화면높이/초).
    * 최고점은 v²/(2g)로 정해진다 — 1.45면 화면 위쪽 10~30%까지 올라오고
@@ -128,12 +166,15 @@ export const PHYSICS = {
 
 export interface Settings {
   speed: SpeedId;
+  /** 문제에 나올 분모들. 부모가 고른다 */
+  denominators: number[];
   sound: boolean;
   haptics: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
   speed: "slow",
+  denominators: [2, 3, 4],
   sound: true,
   haptics: true,
 };

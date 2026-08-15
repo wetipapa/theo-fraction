@@ -3,7 +3,14 @@ import { BlogLink } from "../components/BlogLink";
 import { FractionPreview } from "../components/FractionPreview";
 import { HubLink } from "../components/HubLink";
 import { Button } from "../components/ui/Button";
-import { DIFFICULTY_SETS, type Settings, type SpeedId } from "../config/gameConfig";
+import {
+  ALL_DENOMINATORS,
+  DENOMINATOR_PRESETS,
+  DIFFICULTY_SETS,
+  denominatorsLabel,
+  type Settings,
+  type SpeedId,
+} from "../config/gameConfig";
 import { playTap, setHaptics, setSound, unlock } from "../lib/feedback";
 import wetiStanding from "../assets/characters/weti-fullbody.png";
 
@@ -57,7 +64,7 @@ export function HomeScreen({ settings, bestScore, onChange, onStart }: HomeScree
       </Button>
 
       <p className="-mt-2 text-xs font-bold text-[var(--color-ink-soft)]">
-        {DIFFICULTY_SETS[settings.speed].label}
+        {denominatorsLabel(settings.denominators)}로 나누기 · {DIFFICULTY_SETS[settings.speed].label}
         {bestScore > 0 && ` · 최고 ${bestScore}점`}
       </p>
 
@@ -73,6 +80,10 @@ export function HomeScreen({ settings, bestScore, onChange, onStart }: HomeScree
 
         {panel === "settings" && (
           <div className="flex flex-col gap-3 rounded-2xl border-2 border-[var(--color-line)] bg-[var(--color-card)] p-3">
+            <DenominatorPicker
+              value={settings.denominators}
+              onChange={(denominators) => onChange({ ...settings, denominators })}
+            />
             <Choice
               label="난이도"
               value={settings.speed}
@@ -84,10 +95,10 @@ export function HomeScreen({ settings, bestScore, onChange, onStart }: HomeScree
             />
             <p className="text-xs font-bold text-[var(--color-ink-soft)]">
               {settings.speed === "slow"
-                ? "2·3·4로 나눈 그림만 나와요. 폭탄은 없어요"
+                ? "천천히 떠 있어요. 폭탄은 없어요"
                 : settings.speed === "normal"
-                  ? "6까지 나눠지고 폭탄이 섞여요. 2/4처럼 같은 크기도 정답이에요"
-                  : "8까지 나눠지고 빠르게 올라와요"}
+                  ? "폭탄이 섞여요. 2/4처럼 같은 크기도 정답이에요"
+                  : "빠르게 지나가고 폭탄이 자주 나와요"}
             </p>
             <div className="flex flex-col gap-1.5">
               <Toggle
@@ -117,6 +128,70 @@ export function HomeScreen({ settings, bestScore, onChange, onStart }: HomeScree
 
       <HubLink className="pt-1" />
       <BlogLink />
+    </div>
+  );
+}
+
+/**
+ * 분모를 하나씩 켜고 끈다.
+ *
+ * 아이마다 막히는 곳이 다르다. 2·3·4는 되는데 7·8만 안 되는 식이라
+ * 난이도에 묶어 두지 않고 부모가 직접 고르게 한다.
+ * 전부 끄면 낼 문제가 없어지므로 마지막 하나는 꺼지지 않게 막는다.
+ */
+function DenominatorPicker({
+  value,
+  onChange,
+}: {
+  value: number[];
+  onChange: (next: number[]) => void;
+}) {
+  const toggle = (d: number) => {
+    const next = value.includes(d) ? value.filter((x) => x !== d) : [...value, d];
+    if (next.length === 0) return;
+    playTap();
+    onChange(next.sort((a, b) => a - b));
+  };
+
+  return (
+    <div>
+      <p className="mb-1.5 text-xs font-black text-[var(--color-ink-soft)]">몇 조각으로 나눌까요</p>
+      <div className="grid grid-cols-4 gap-1.5" role="group" aria-label="분모 고르기">
+        {ALL_DENOMINATORS.map((d) => {
+          const on = value.includes(d);
+          return (
+            <button
+              key={d}
+              type="button"
+              aria-pressed={on}
+              aria-label={`${d}조각`}
+              onClick={() => toggle(d)}
+              className={`min-h-11 rounded-xl border-2 text-sm font-black transition-transform active:scale-95 ${
+                on
+                  ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-white"
+                  : "border-[var(--color-line)] bg-white text-[var(--color-ink-soft)]"
+              }`}
+            >
+              {d}
+            </button>
+          );
+        })}
+      </div>
+      <div className="mt-1.5 flex flex-wrap gap-1.5">
+        {DENOMINATOR_PRESETS.map((preset) => (
+          <button
+            key={preset.id}
+            type="button"
+            onClick={() => {
+              playTap();
+              onChange([...preset.list]);
+            }}
+            className="min-h-9 rounded-lg border-2 border-[var(--color-line)] bg-[var(--color-cream-deep)] px-2.5 text-xs font-black text-[var(--color-ink-soft)] active:scale-95"
+          >
+            {preset.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

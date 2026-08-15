@@ -25,7 +25,7 @@ npm run lint       # oxlint
 
 ```
 src/
-├─ config/gameConfig.ts   난이도·규칙·물리. 숫자를 고칠 일은 대부분 여기
+├─ config/gameConfig.ts   난이도·규칙·물리·분모 목록. 숫자를 고칠 일은 대부분 여기
 ├─ data/foods.ts          분수를 담는 음식들 (모양·색)
 ├─ lib/
 │  ├─ fraction.ts         분수 계산. 소수로 바꾸지 않고 정수 곱으로만 비교한다
