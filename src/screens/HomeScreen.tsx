@@ -19,7 +19,7 @@ type Panel = "settings" | "how" | null;
 /**
  * 첫 화면.
  *
- * 형제 서비스(웨티 구구단 팡팡)의 첫 화면을 그대로 따른다 —
+ * 형제 서비스(구구단 팡팡)의 첫 화면을 그대로 따른다 —
  * 그림 → 이름 → 한 줄 설명 → 바로 시작 → 접힌 보조 버튼 둘 → 링크.
  * 설명을 읽지 않아도 바로 시작할 수 있어야 하고, 고르는 일은 원할 때 펼쳐서 한다.
  */
@@ -36,7 +36,7 @@ export function HomeScreen({ settings, bestScore, onChange, onStart }: HomeScree
           <img src={wetiStanding} alt="분수 그림 앞에 서 있는 웨티" className="h-[18vh] max-h-40 w-auto" draggable={false} />
           <FractionPreview fraction={{ n: 3, d: 4 }} food="pizza" size={54} />
         </div>
-        <h1 className="text-3xl font-black text-[var(--color-ink)]">웨티 분수 쓱싹</h1>
+        <h1 className="text-3xl font-black text-[var(--color-ink)]">분수 쓱싹</h1>
         <p className="text-sm font-bold text-[var(--color-ink-soft)]">문제에 맞는 그림만 골라 쓱싹 베어요</p>
       </div>
 

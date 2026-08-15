@@ -1,11 +1,11 @@
-# 웨티 분수 쓱싹 (WTPP SLICE)
+# 분수 쓱싹 (WTPP SLICE)
 
 튀어 오르는 음식 중에서 문제에 맞는 분수만 골라 베는 6~9세용 분수 게임.
 상위 규칙은 `Wetipapa/CLAUDE.md`를 따르고, 여기에는 이 게임에만 해당하는 것만 적는다.
 
 - 스택: Vite + React 19 + Tailwind v4 + Canvas 2D
 - 배포 예정 주소: `slice.wetipapa.com`
-- 저장소: 아직 만들지 않았다 (테스트 후 `wetipapa/theo-fraction`으로)
+- 저장소: `wetipapa/theo-fraction`
 
 ## 이 게임에서 무엇을 배우는가
 
