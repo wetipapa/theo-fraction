@@ -152,4 +152,20 @@ describe("난이도", () => {
     expect(DIFFICULTY_SETS.normal.fall).toBeLessThan(DIFFICULTY_SETS.fast.fall);
     expect(DIFFICULTY_SETS.slow.hearts).toBeGreaterThan(DIFFICULTY_SETS.fast.hearts);
   });
+
+  it("쉬울수록 한 번에 적게 나오고 사이가 넉넉하다", () => {
+    expect(DIFFICULTY_SETS.slow.maxConcurrent).toBeLessThan(DIFFICULTY_SETS.fast.maxConcurrent);
+    expect(DIFFICULTY_SETS.slow.interval).toBeGreaterThan(DIFFICULTY_SETS.fast.interval);
+    expect(DIFFICULTY_SETS.slow.decoys).toBeLessThan(DIFFICULTY_SETS.fast.decoys);
+    expect(DIFFICULTY_SETS.slow.bombRate).toBeLessThan(DIFFICULTY_SETS.fast.bombRate);
+  });
+
+  it("난이도가 튀어 오르는 높이를 건드리지 않는다", () => {
+    // 예전에 난이도마다 발사 배수를 곱했더니 쉬움이 제일 낮게 떠서
+    // 아래쪽 좁은 구간을 스쳐 지나갔다. 정작 쉬움이 제일 어려웠다.
+    for (const diff of Object.values(DIFFICULTY_SETS)) {
+      expect(diff).not.toHaveProperty("speed");
+      expect(diff).not.toHaveProperty("launch");
+    }
+  });
 });

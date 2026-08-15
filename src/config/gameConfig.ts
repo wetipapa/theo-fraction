@@ -53,8 +53,6 @@ export interface DifficultySet {
   maxConcurrent: number;
   /** 다음 무리가 올라오기까지의 간격(초) */
   interval: number;
-  /** 튀어 오르는 속도 배수. 1이 기준 */
-  speed: number;
   /** 한 무리에 섞이는 오답 개수 */
   decoys: number;
   /** 폭탄이 섞일 확률(0~1) */
@@ -74,7 +72,6 @@ export const DIFFICULTY_SETS: Record<SpeedId, DifficultySet> = {
     fall: 0.24,
     maxConcurrent: 3,
     interval: 2.2,
-    speed: 0.85,
     decoys: 1,
     bombRate: 0,
     allowEquivalent: false,
@@ -85,7 +82,6 @@ export const DIFFICULTY_SETS: Record<SpeedId, DifficultySet> = {
     fall: 0.34,
     maxConcurrent: 4,
     interval: 1.7,
-    speed: 1,
     decoys: 2,
     bombRate: 0.18,
     allowEquivalent: true,
@@ -96,7 +92,6 @@ export const DIFFICULTY_SETS: Record<SpeedId, DifficultySet> = {
     fall: 0.50,
     maxConcurrent: 5,
     interval: 1.25,
-    speed: 1.2,
     decoys: 3,
     bombRate: 0.3,
     allowEquivalent: true,
@@ -141,9 +136,14 @@ export const PHYSICS = {
   fallGravity: 1.15,
   /**
    * 튀어 오르는 초기 속도의 범위 (화면높이/초).
-   * 최고점은 v²/(2g)로 정해진다 — 1.45면 화면 위쪽 10~30%까지 올라오고
-   * 공중에 2.5초쯤 머문다. 이보다 낮으면 아래쪽에만 맴돌아 손이 닿기 답답하고,
-   * 높으면 화면 밖으로 나갔다 오느라 볼 수 있는 시간이 오히려 줄어든다.
+   *
+   * **난이도가 이 값을 건드리지 않는다.** 예전에는 난이도마다 배수를 곱했는데,
+   * 쉬움이 화면 45% 지점까지만 떠서 아래쪽 좁은 구간을 스쳐 지나갔다.
+   * 정작 쉬움이 제일 어려웠다. 어려움은 반대로 화면 밖까지 날아가 그동안 보이지도 않았다.
+   * 어느 난이도에서든 같은 높이로 떠야 아이가 같은 자리를 보고 겨냥한다.
+   *
+   * 최고점은 v²/(2g)로 정해진다 — 1.46이면 화면 위에서 19% 지점까지 올라온다.
+   * 난이도는 **떨어지는 속도와 개수**로만 준다 (`fall`, `interval`, `maxConcurrent`).
    */
   launchSpeed: { min: 1.36, max: 1.56 },
   /**

@@ -67,7 +67,6 @@ export class Engine {
       const slot = (i + 0.5) / n;
       const jitter = (this.rng() - 0.5) * (0.6 / n);
       const x = Math.min(0.88, Math.max(0.12, slot + jitter));
-      const speed = this.diff.speed;
       this.pieces.push({
         id: this.nextId++,
         role: spec.role,
@@ -75,8 +74,8 @@ export class Engine {
         food: spec.food,
         x,
         y: 1.12,
-        vx: rand(this.rng, PHYSICS.driftSpeed.min, PHYSICS.driftSpeed.max) * speed,
-        vy: -rand(this.rng, PHYSICS.launchSpeed.min, PHYSICS.launchSpeed.max) * speed,
+        vx: rand(this.rng, PHYSICS.driftSpeed.min, PHYSICS.driftSpeed.max),
+        vy: -rand(this.rng, PHYSICS.launchSpeed.min, PHYSICS.launchSpeed.max),
         angle: (this.rng() - 0.5) * 2 * PHYSICS.tilt,
         spin: rand(this.rng, PHYSICS.spin.min, PHYSICS.spin.max),
         sliced: false,
