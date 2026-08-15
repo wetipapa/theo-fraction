@@ -8,6 +8,7 @@ import {
   DENOMINATOR_PRESETS,
   DIFFICULTY_SETS,
   denominatorsLabel,
+  type FallSpeed,
   type Settings,
   type SpeedId,
 } from "../config/gameConfig";
@@ -64,7 +65,8 @@ export function HomeScreen({ settings, bestScore, onChange, onStart }: HomeScree
       </Button>
 
       <p className="-mt-2 text-xs font-bold text-[var(--color-ink-soft)]">
-        {denominatorsLabel(settings.denominators)}로 나누기 · {DIFFICULTY_SETS[settings.speed].label}
+        {denominatorsLabel(settings.denominators)}로 나누기 · {DIFFICULTY_SETS[settings.speed].label} · 빠르기{" "}
+        {settings.fallSpeed}
         {bestScore > 0 && ` · 최고 ${bestScore}점`}
       </p>
 
@@ -84,6 +86,10 @@ export function HomeScreen({ settings, bestScore, onChange, onStart }: HomeScree
               value={settings.denominators}
               onChange={(denominators) => onChange({ ...settings, denominators })}
             />
+            <FallSpeedPicker
+              value={settings.fallSpeed}
+              onChange={(fallSpeed) => onChange({ ...settings, fallSpeed })}
+            />
             <Choice
               label="난이도"
               value={settings.speed}
@@ -95,10 +101,10 @@ export function HomeScreen({ settings, bestScore, onChange, onStart }: HomeScree
             />
             <p className="text-xs font-bold text-[var(--color-ink-soft)]">
               {settings.speed === "slow"
-                ? "천천히 떠 있어요. 폭탄은 없어요"
+                ? "한 번에 두 개까지만 나와요. 폭탄은 없어요"
                 : settings.speed === "normal"
                   ? "폭탄이 섞여요. 2/4처럼 같은 크기도 정답이에요"
-                  : "빠르게 지나가고 폭탄이 자주 나와요"}
+                  : "한 번에 다섯 개까지 나오고 폭탄이 자주 나와요"}
             </p>
             <div className="flex flex-col gap-1.5">
               <Toggle
@@ -128,6 +134,52 @@ export function HomeScreen({ settings, bestScore, onChange, onStart }: HomeScree
 
       <HubLink className="pt-1" />
       <BlogLink />
+    </div>
+  );
+}
+
+/**
+ * 떨어지는 빠르기.
+ *
+ * 난이도와 따로 둔다. 오답을 많이 섞되 천천히 떨어지길 바랄 수도 있고 그 반대일 수도 있다.
+ * 아이가 조각을 세는 데 걸리는 시간은 아이마다 다르고, 그게 이 게임에서 제일 중요한 시간이다.
+ */
+function FallSpeedPicker({
+  value,
+  onChange,
+}: {
+  value: FallSpeed;
+  onChange: (next: FallSpeed) => void;
+}) {
+  const steps: FallSpeed[] = [1, 2, 3, 4, 5];
+  return (
+    <div>
+      <p className="mb-1.5 text-xs font-black text-[var(--color-ink-soft)]">떨어지는 빠르기</p>
+      <div className="flex items-center gap-1.5">
+        <span className="shrink-0 text-[11px] font-bold text-[var(--color-ink-soft)]">느리게</span>
+        <div className="flex flex-1 gap-1.5" role="group" aria-label="떨어지는 빠르기">
+          {steps.map((n) => (
+            <button
+              key={n}
+              type="button"
+              aria-pressed={value === n}
+              aria-label={`빠르기 ${n}단계`}
+              onClick={() => {
+                playTap();
+                onChange(n);
+              }}
+              className={`min-h-11 flex-1 rounded-xl border-2 text-sm font-black transition-transform active:scale-95 ${
+                value === n
+                  ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-white"
+                  : "border-[var(--color-line)] bg-white text-[var(--color-ink-soft)]"
+              }`}
+            >
+              {n}
+            </button>
+          ))}
+        </div>
+        <span className="shrink-0 text-[11px] font-bold text-[var(--color-ink-soft)]">빠르게</span>
+      </div>
     </div>
   );
 }

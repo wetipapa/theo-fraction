@@ -7,6 +7,26 @@
 
 export type SpeedId = "slow" | "normal" | "fast";
 
+/**
+ * 떨어지는 빠르기. 1이 가장 느리다.
+ *
+ * 난이도와 따로 둔다. 둘은 다른 축이다 — 오답을 많이 섞되 천천히 떨어지길 바랄 수도 있고,
+ * 그 반대일 수도 있다. 난이도에 묶으면 "천천히 하려면 문제도 쉬워져야" 한다.
+ *
+ * 5단계인 이유: 10칸으로 쪼개면 한 칸이 8%씩이라 인접한 값을 구분해 고를 수 없다.
+ * 5칸이면 한 칸이 15~20%라 눌러 보면 바로 체감된다.
+ */
+export type FallSpeed = 1 | 2 | 3 | 4 | 5;
+
+/** 단계별 하강 중력 배수. 작을수록 천천히 떨어진다 */
+export const FALL_STEPS: Record<FallSpeed, number> = {
+  1: 0.13,
+  2: 0.19,
+  3: 0.27,
+  4: 0.38,
+  5: 0.52,
+};
+
 /** 고를 수 있는 분모. 1은 분수가 아니고, 10 이상은 조각이 너무 얇아 눈으로 못 센다 */
 export const ALL_DENOMINATORS = [2, 3, 4, 5, 6, 7, 8, 9] as const;
 
@@ -43,12 +63,6 @@ export interface DifficultySet {
    * "틀려도 계속할 수 있다"를 먼저 알려 주기 위해서다. 세 번 틀리고 끝나면 다시 켜지 않는다.
    */
   hearts: number;
-  /**
-   * 떨어질 때의 중력 배수.
-   * 올라갈 때와 같은 힘으로 떨어뜨리면 올라온 속도 그대로 내려가서 휙 지나가 버린다.
-   * 어른이 해도 겨냥할 틈이 없다. 내려올 때만 힘을 줄여 천천히 떨어지게 한다.
-   */
-  fall: number;
   /** 한 번에 떠 있을 수 있는 최대 개수 */
   maxConcurrent: number;
   /** 다음 무리가 올라오기까지의 간격(초) */
@@ -69,8 +83,9 @@ export const DIFFICULTY_SETS: Record<SpeedId, DifficultySet> = {
   slow: {
     label: "쉬움",
     hearts: 5,
-    fall: 0.24,
-    maxConcurrent: 3,
+    // 속도만큼이나 "동시에 몇 개를 판단해야 하는가"가 시간을 잡아먹는다.
+    // 셋이 떠 있으면 체공을 아무리 늘려도 하나당 볼 시간은 3분의 1이다.
+    maxConcurrent: 2,
     interval: 2.2,
     decoys: 1,
     bombRate: 0,
@@ -79,7 +94,6 @@ export const DIFFICULTY_SETS: Record<SpeedId, DifficultySet> = {
   normal: {
     label: "보통",
     hearts: 4,
-    fall: 0.34,
     maxConcurrent: 4,
     interval: 1.7,
     decoys: 2,
@@ -89,7 +103,6 @@ export const DIFFICULTY_SETS: Record<SpeedId, DifficultySet> = {
   fast: {
     label: "어려움",
     hearts: 3,
-    fall: 0.50,
     maxConcurrent: 5,
     interval: 1.25,
     decoys: 3,
@@ -166,6 +179,8 @@ export const PHYSICS = {
 
 export interface Settings {
   speed: SpeedId;
+  /** 떨어지는 빠르기 1~5. 난이도와 따로 고른다 */
+  fallSpeed: FallSpeed;
   /** 문제에 나올 분모들. 부모가 고른다 */
   denominators: number[];
   sound: boolean;
@@ -174,6 +189,7 @@ export interface Settings {
 
 export const DEFAULT_SETTINGS: Settings = {
   speed: "slow",
+  fallSpeed: 2,
   denominators: [2, 3, 4],
   sound: true,
   haptics: true,

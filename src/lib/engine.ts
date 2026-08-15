@@ -1,4 +1,4 @@
-import { DIFFICULTY_SETS, PHYSICS, RULES, type Settings } from "../config/gameConfig";
+import { DIFFICULTY_SETS, FALL_STEPS, PHYSICS, RULES, type Settings } from "../config/gameConfig";
 import { foodById } from "../data/foods";
 import type { Particle, Phase, Piece, Popup, Question } from "../types";
 import { isCorrectPiece, makeQuestion, makeWave, type Rng } from "./problems";
@@ -43,11 +43,13 @@ export class Engine {
   private readonly rng: Rng;
 
   private readonly denominators: number[];
+  private readonly fall: number;
 
   constructor(settings: Settings, rng: Rng = Math.random) {
     this.rng = rng;
     this.diff = DIFFICULTY_SETS[settings.speed];
     this.denominators = settings.denominators.length > 0 ? settings.denominators : [2, 3, 4];
+    this.fall = FALL_STEPS[settings.fallSpeed] ?? FALL_STEPS[2];
     this.maxHearts = this.diff.hearts;
     this.hearts = this.diff.hearts;
     this.question = makeQuestion(this.denominators, rng);
@@ -101,7 +103,7 @@ export class Engine {
     for (const p of this.pieces) {
       // 올라갈 때와 떨어질 때 힘을 다르게 준다. 같은 힘으로 떨어뜨리면
       // 올라온 속도 그대로 내려가서 겨냥할 틈 없이 휙 지나간다.
-      p.vy += (p.vy < 0 ? PHYSICS.gravity : PHYSICS.fallGravity * this.diff.fall) * dt;
+      p.vy += (p.vy < 0 ? PHYSICS.gravity : PHYSICS.fallGravity * this.fall) * dt;
       p.x += p.vx * dt;
       p.y += p.vy * dt;
       p.angle += p.spin * dt * Math.PI * 2;

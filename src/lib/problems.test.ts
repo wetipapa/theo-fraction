@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { ALL_DENOMINATORS, DIFFICULTY_SETS, denominatorsLabel } from "../config/gameConfig";
+import {
+  ALL_DENOMINATORS,
+  DIFFICULTY_SETS,
+  FALL_STEPS,
+  denominatorsLabel,
+} from "../config/gameConfig";
 import { isCorrectPiece, makeQuestion, makeWave, type Rng } from "./problems";
 
 /** 씨앗을 고정한 난수. 테스트가 실행할 때마다 달라지지 않게 한다 */
@@ -141,15 +146,22 @@ describe("denominatorsLabel", () => {
 });
 
 describe("난이도", () => {
-  it("떨어질 때가 올라갈 때보다 느리다", () => {
-    for (const diff of Object.values(DIFFICULTY_SETS)) {
-      expect(diff.fall).toBeLessThan(1);
+  it("어느 단계든 떨어질 때가 올라갈 때보다 느리다", () => {
+    for (const f of Object.values(FALL_STEPS)) {
+      expect(f).toBeLessThan(1);
     }
   });
 
-  it("쉬울수록 더 천천히 떨어지고 기회가 많다", () => {
-    expect(DIFFICULTY_SETS.slow.fall).toBeLessThan(DIFFICULTY_SETS.normal.fall);
-    expect(DIFFICULTY_SETS.normal.fall).toBeLessThan(DIFFICULTY_SETS.fast.fall);
+  it("빠르기 단계가 순서대로 빨라진다", () => {
+    const steps = [1, 2, 3, 4, 5].map((n) => FALL_STEPS[n as 1 | 2 | 3 | 4 | 5]);
+    for (let i = 1; i < steps.length; i++) {
+      expect(steps[i]).toBeGreaterThan(steps[i - 1]);
+      // 인접한 단계는 눌러 보면 체감될 만큼 벌어져 있어야 한다 (10% 이상)
+      expect(steps[i] / steps[i - 1]).toBeGreaterThan(1.1);
+    }
+  });
+
+  it("쉬울수록 기회가 많다", () => {
     expect(DIFFICULTY_SETS.slow.hearts).toBeGreaterThan(DIFFICULTY_SETS.fast.hearts);
   });
 
@@ -166,6 +178,8 @@ describe("난이도", () => {
     for (const diff of Object.values(DIFFICULTY_SETS)) {
       expect(diff).not.toHaveProperty("speed");
       expect(diff).not.toHaveProperty("launch");
+      // 떨어지는 빠르기도 난이도가 아니라 별도 설정이 쥔다
+      expect(diff).not.toHaveProperty("fall");
     }
   });
 });
