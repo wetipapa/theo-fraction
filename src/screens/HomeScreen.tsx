@@ -13,7 +13,7 @@ import {
   type SpeedId,
 } from "../config/gameConfig";
 import { playTap, setHaptics, setSound, unlock } from "../lib/feedback";
-import wetiStanding from "../assets/characters/weti-fullbody.png";
+import wetiSlice from "../assets/characters/weti-scene-slice.png";
 
 interface HomeScreenProps {
   settings: Settings;
@@ -38,11 +38,22 @@ export function HomeScreen({ settings, bestScore, onChange, onStart }: HomeScree
   return (
     <div className="theme-service flex h-full flex-col items-center justify-center gap-5 overflow-y-auto px-5 py-6 safe-top safe-bottom">
       <div className="flex flex-col items-center gap-2">
-        {/* 무슨 게임인지 한 컷으로 보여준다. 웨티 옆에 실제 게임에 나오는 그림을 그대로 띄운다 */}
+        {/* 무슨 게임인지 한 컷으로 보여준다.
+            칼만 있으면 그냥 베는 게임이라 분수가 안 보이고, 분수만 있으면 뭘 하는지 모른다.
+            칼 든 웨티 아래에 실제 게임에 나오는 그림을 함께 띄워 둘 다 보이게 한다.
+            칼이 왼쪽 위로 뻗어 있어 그림은 오른쪽 아래에 붙인다. */}
         <div className="flex items-end gap-1">
-          <FractionPreview fraction={{ n: 1, d: 2 }} food="watermelon" size={54} />
-          <img src={wetiStanding} alt="분수 그림 앞에 서 있는 웨티" className="h-[18vh] max-h-40 w-auto" draggable={false} />
-          <FractionPreview fraction={{ n: 3, d: 4 }} food="pizza" size={54} />
+          <img
+            src={wetiSlice}
+            alt="분수 그림을 베려고 칼을 든 웨티"
+            className="h-[21vh] max-h-48 w-auto"
+            draggable={false}
+          />
+          {/* 칼이 왼쪽 위로 뻗어 있어 오른쪽이 비어 있다. 그 자리에 세로로 쌓는다 */}
+          <div className="flex flex-col gap-1 pb-2">
+            <FractionPreview fraction={{ n: 3, d: 4 }} food="pizza" size={52} />
+            <FractionPreview fraction={{ n: 1, d: 2 }} food="watermelon" size={52} />
+          </div>
         </div>
         <h1 className="text-3xl font-black text-[var(--color-ink)]">분수 쓱싹</h1>
         <p className="text-sm font-bold text-[var(--color-ink-soft)]">문제에 맞는 그림만 골라 쓱싹 베어요</p>

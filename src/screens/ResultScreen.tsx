@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { BlogLink } from "../components/BlogLink";
 import { HubLink } from "../components/HubLink";
 import { Button } from "../components/ui/Button";
 import { playTap } from "../lib/feedback";
+import { buildResultImage, saveResultImage } from "../lib/resultImage";
 import type { RunResult } from "../types";
 import wetiProud from "../assets/characters/weti-proud.png";
 import wetiHappy from "../assets/characters/weti-happy.png";
@@ -21,6 +23,28 @@ interface ResultScreenProps {
  * 아이가 다시 하고 싶어지는 게 먼저다. 못한 것을 세어 보여 주면 한 판으로 끝난다.
  */
 export function ResultScreen({ result, bestScore, onRetry, onHome }: ResultScreenProps) {
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState<string | null>(null);
+
+  const savePhoto = async () => {
+    playTap();
+    setSaving(true);
+    setSaved(null);
+    try {
+      const blob = await buildResultImage(result, bestScore);
+      if (!blob) {
+        setSaved("저장하지 못했어요");
+        return;
+      }
+      const outcome = await saveResultImage(blob, `분수쓱싹_${result.score}점.png`);
+      setSaved(outcome === "failed" ? "저장하지 못했어요" : "사진으로 저장했어요!");
+    } catch {
+      setSaved("저장하지 못했어요");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const face = result.isBest ? wetiProud : result.solved > 0 ? wetiHappy : wetiIdle;
   const headline = result.isBest
     ? "새 최고 기록이에요!"
@@ -48,6 +72,12 @@ export function ResultScreen({ result, bestScore, onRetry, onHome }: ResultScree
         <Stat label="최고 연속" value={`${result.bestCombo}개`} />
       </div>
 
+      {saved && (
+        <p className="text-sm font-black text-[var(--color-accent-deep)]" role="status">
+          {saved}
+        </p>
+      )}
+
       <div className="mt-4 flex w-full max-w-xs flex-col gap-2">
         <Button
           size="xl"
@@ -57,6 +87,9 @@ export function ResultScreen({ result, bestScore, onRetry, onHome }: ResultScree
           }}
         >
           한 번 더 하기
+        </Button>
+        <Button variant="soft" size="md" onClick={savePhoto} disabled={saving}>
+          {saving ? "사진 만드는 중…" : "기록 사진으로 저장"}
         </Button>
         <Button
           variant="soft"

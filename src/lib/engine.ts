@@ -1,5 +1,6 @@
 import { DIFFICULTY_SETS, FALL_STEPS, PHYSICS, RULES, type Settings } from "../config/gameConfig";
 import { foodById } from "../data/foods";
+import type { Fraction } from "./fraction";
 import type { Particle, Phase, Piece, Popup, Question } from "../types";
 import { isCorrectPiece, makeQuestion, makeWave, type Rng } from "./problems";
 import { angleOf, distanceToSegment, type Point } from "./swipe";
@@ -31,6 +32,8 @@ export class Engine {
   solved = 0;
   hitsInQuestion = 0;
   question: Question;
+  /** 이 판에서 만난 분수. 기록 사진에 쓴다 */
+  readonly seen: Fraction[] = [];
   pieces: Piece[] = [];
   particles: Particle[] = [];
   popups: Popup[] = [];
@@ -53,6 +56,7 @@ export class Engine {
     this.maxHearts = this.diff.hearts;
     this.hearts = this.diff.hearts;
     this.question = makeQuestion(this.denominators, rng);
+    this.remember(this.question);
     // 시작하자마자 한 무리 올린다. 빈 화면을 보여 주지 않는다
     this.spawnWave();
   }
@@ -213,6 +217,7 @@ export class Engine {
         this.hitsInQuestion = 0;
         this.solved++;
         this.question = makeQuestion(this.denominators, this.rng);
+        this.remember(this.question);
         out.solved = true;
       }
     }
@@ -223,6 +228,13 @@ export class Engine {
     }
 
     return out;
+  }
+
+  /** 같은 분수는 한 번만 담는다 */
+  private remember(q: Question) {
+    const { n, d } = q.target;
+    if (this.seen.some((f) => f.n === n && f.d === d)) return;
+    this.seen.push({ n, d });
   }
 
   private burst(p: Piece, color: string, count: number) {
@@ -248,6 +260,8 @@ export class Engine {
       bestCombo: this.bestCombo,
       solved: this.solved,
       isBest: this.score > previousBest,
+      // 마지막 문제는 아직 풀지 않았으니 뺀다 — 화면에 떠 있던 채로 끝난 것이다
+      seen: this.seen.slice(0, Math.max(0, this.seen.length - 1)),
     };
   }
 }

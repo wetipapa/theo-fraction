@@ -90,4 +90,9 @@ export interface RunResult {
   bestCombo: number;
   solved: number;
   isBest: boolean;
+  /**
+   * 이 판에서 만난 분수들 (같은 것은 한 번만, 만난 순서대로).
+   * 기록 사진에 그림으로 넣는다 — 숫자만 있는 카드보다 아이가 자기 기록으로 알아본다.
+   */
+  seen: Fraction[];
 }
